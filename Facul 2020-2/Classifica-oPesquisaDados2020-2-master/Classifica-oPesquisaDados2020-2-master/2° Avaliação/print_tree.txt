@@ -1,0 +1,10 @@
+#define COUNT 5
+
+typedef struct noArv{ 
+    int chave;
+    int h;
+    struct noArv *esq, *dir; 
+}Arv; 
+
+void print2DUtil(Arv *raiz, int space) ;
+void print2D(Arv *raiz);

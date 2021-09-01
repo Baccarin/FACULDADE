@@ -1,0 +1,281 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include "print_tree.h"
+
+int max(int a, int b){
+    return (a > b)? a : b;
+}
+
+int altura(Arv *r){
+    if (r == NULL)
+        return 0;
+    return r->h;
+}
+
+Arv *dirRotacao(Arv *w){
+    
+    Arv *e = w->esq;
+    Arv *T2 = e->dir;
+  
+    e->dir = w;
+    w->esq = T2;
+  
+    w->h = max(altura(w->esq), altura(w->dir)) + 1;
+    e->h = max(altura(e->esq), altura(e->dir)) + 1;
+
+    return e;
+}
+
+Arv *esqRotacao(Arv *e){
+    
+    Arv *w = e->dir;
+    Arv *T2 = w->esq;
+  
+    w->esq = e;
+    e->dir = T2;
+  
+    e->h = max(altura(e->esq), altura(e->dir)) + 1;
+    w->h = max(altura(w->esq), altura(w->dir)) + 1;
+  
+    return w;
+}
+
+int equilbrar(Arv *r){
+    if (r == NULL)
+        return 0;
+    return altura(r->esq)- altura(r->dir);
+}
+
+void percorreEmOrdem(Arv* raiz){
+    if(raiz == NULL)
+        return;
+    else{
+        percorreEmOrdem(raiz->esq);
+        //printf("%d\n", raiz->chave);
+        percorreEmOrdem(raiz->dir);
+    }
+}
+
+void percorrePreOrdem(Arv* raiz){
+    if(raiz == NULL)
+        return;
+    else{
+        //printf("%d\n", raiz->chave);
+        percorrePreOrdem(raiz->esq);
+        percorrePreOrdem(raiz->dir);
+    }
+}
+
+void percorrePosOrdem(Arv* raiz){
+    if(raiz == NULL)
+        return;
+    else{
+        percorrePreOrdem(raiz->esq);
+        percorrePreOrdem(raiz->dir);
+        //printf("%d\n", raiz->chave);
+    }
+}
+
+Arv* insere(Arv* raiz, int chave){
+    if(raiz == NULL){
+        raiz = (Arv*)malloc(sizeof(Arv));
+        raiz->chave = chave;
+        raiz->esq = raiz->dir = NULL;
+    }
+    else if(chave < raiz->chave){
+        raiz->esq = insere(raiz->esq, chave);
+    }
+    else if(chave > raiz->chave){
+        raiz->dir = insere(raiz->dir, chave);
+    }
+    else
+        return raiz;
+        
+    raiz->h = 1 + max(altura(raiz->esq), altura(raiz->dir));
+    
+    int equilibrio = equilbrar(raiz);
+    
+    if(equilibrio > 1 && chave < raiz->esq->chave)
+        return dirRotacao(raiz);
+    if(equilibrio < -1 && chave > raiz->dir->chave)
+        return esqRotacao(raiz);
+    if(equilibrio > 1 && chave > raiz->esq->chave){
+        raiz->esq =  esqRotacao(raiz->esq);
+        return dirRotacao(raiz);
+    }
+    if(equilibrio < -1 && chave < raiz->dir->chave){
+        raiz->dir = dirRotacao(raiz->dir);
+        return esqRotacao(raiz);
+    }
+    return raiz;
+}
+
+Arv* minItem(Arv *r){
+    if(r->esq)
+        r = r->esq;
+    return r;
+}
+
+Arv* remover(Arv* r, int k){
+    if(r == NULL){
+        return NULL;
+    }
+    else if(r->chave > k){
+        r->esq = remover(r->esq, k);
+    }
+    else if(r->chave < k){
+        r->dir = remover(r->dir, k);
+    }
+    else if(r->chave == k){
+        if(r->esq == NULL && r->dir == NULL){
+            free(r);
+            r = NULL;
+        }
+        else if((r->dir) && (r->esq)){
+            Arv *tmp = minItem(r->dir);
+            r->chave = tmp->chave;
+            if(r->dir->esq)
+                r->dir = remover(r->dir,r->dir->esq->chave); 
+            else 
+                r->dir = remover(r->dir,r->dir->chave);
+        }
+        else if(r->esq == NULL){
+            Arv* temp = r;
+            r = r->dir;
+            free(temp);
+        }
+        else if(r->dir == NULL){
+            Arv* temp = r;
+            r = r->esq;
+            free(temp);
+        }
+    }
+    if (r == NULL)
+        return r; 
+
+    r->h = 1 + max(altura(r->esq), altura(r->dir));
+    
+    int equilibrio = equilbrar(r);
+    
+    if(equilibrio > 1 && equilbrar(r->esq) >= 0)
+        return dirRotacao(r);
+    if(equilibrio > 1 && equilbrar(r->esq) < 0){
+        r->esq =  esqRotacao(r->esq);
+        return dirRotacao(r);
+    }
+    if(equilibrio < -1 && equilbrar(r->dir) <= 0)
+        return esqRotacao(r);
+    if(equilibrio < -1 && equilbrar(r->dir) > 0){
+        r->dir = dirRotacao(r->dir);
+        return esqRotacao(r);
+    }
+    return r;
+}
+
+Arv* busca(Arv* r, int k){
+    if(r == NULL){
+        //printf("\nElemento %d não encontrado!\n", k);
+        return r;
+    }
+    if(r->chave == k){
+        //printf("\nElemento %d encontrado!\n", r->chave);
+        return r;
+    }
+    if(r->chave > k){
+        return busca(r->esq, k);
+    }
+    else{
+        return busca(r->dir, k);
+    }
+}
+
+void print2DUtil(Arv* raiz, int space){
+    
+    if (raiz == NULL)
+        return;
+   
+    space += COUNT;
+  
+    print2DUtil(raiz->dir, space);
+  
+    printf("\n");
+    
+    for (int i = COUNT; i < space; i++)
+        printf(" ");
+    printf("%d \n", raiz->chave);
+  
+    print2DUtil(raiz->esq, space);
+}
+
+void print2D(Arv *raiz){
+   print2DUtil(raiz, 0);
+}
+
+int main(int argc, char** argv){
+    
+    int *v;
+    int x;
+    int n = 10;
+    int p = 0;
+    int i;
+
+    while(n <= 100000){
+        
+        Arv *arvore = NULL;
+        srand(time(NULL));
+        
+        printf("\n\nINSERÇÃO:\n");
+        
+        time_t ini = clock();
+        
+        for(i = 0; i < n; i++){
+            x = rand()%(n*5);
+            arvore = insere(arvore, x);
+        }
+        
+        time_t end = clock();
+    
+        double tempo_total = (double)(end - ini)/ CLOCKS_PER_SEC;
+        printf("Tempo total para %d inserções: %.6f\n", n, tempo_total);
+        
+        //print2D(arvore);
+        
+        //printf("\nPré-Ordem:\n");
+        percorrePreOrdem(arvore);
+        //printf("\nEm Ordem:\n");
+        percorreEmOrdem(arvore);
+        //printf("\nPós-Ordem:\n");
+        percorrePosOrdem(arvore);
+    
+        printf("\n\nREMOÇÃO:\n");
+    
+        time_t ini2 = clock();
+    
+        x = rand()%(n*5);
+        arvore = remover(arvore,x);
+        
+        time_t end2 = clock();
+    
+        double tempo_total2 = (double)(end2 - ini2)/ CLOCKS_PER_SEC;
+        printf("Tempo total para %d remoções: %.6f\n", n, tempo_total2);
+    
+        //print2D(arvore);
+    
+        printf("\n\nPESQUISA:\n");
+    
+        time_t ini3 = clock();
+    
+        x = rand()%(n*5);
+        arvore = busca(arvore,x);
+    
+        time_t end3 = clock();
+    
+        double tempo_total3 = (double)(end3 - ini3)/ CLOCKS_PER_SEC;
+        printf("Tempo total para %d pesquisas: %.6f\n", n, tempo_total3);
+        
+        n = n*10;
+    }
+    return (EXIT_SUCCESS);
+}
